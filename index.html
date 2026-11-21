@@ -77,8 +77,9 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
     <section id="tab-media" class="tabview hidden">
       <div class="card">
         <div class="row" style="justify-content:space-between"><h2>Media</h2><div class="row"><input id="mediaSearch" placeholder="Filter files..." style="width:220px"><button class="btn" id="refreshMedia">Refresh</button></div></div>
-        <p class="muted small">Upload images/videos to the main website repo. Deleting removes the file from the repo (commit). Check trip references before deleting.</p>
-        <div class="row" style="margin-bottom:.8rem"><input id="mediaFiles" type="file" multiple accept="image/*,video/*"><button class="btn btn-primary" id="uploadMedia">Upload selected</button></div>
+        <p class="muted small">Upload images/videos to the main website repo. Renaming/replacing updates references in <span class="kbd">data.js</span> so the whole site uses the new file.</p>
+        <div class="row" style="margin-bottom:.6rem"><input id="mediaFiles" type="file" multiple accept="image/*,video/*"><button class="btn" id="stageMedia">Prepare upload</button></div>
+        <div id="mediaStage" class="stack" style="margin-bottom:1rem"></div>
         <div id="mediaList" class="media-grid"></div>
       </div>
     </section>
@@ -584,25 +585,128 @@ async function renderMedia(){
 
 $('#refreshMedia').onclick=renderMedia;
 $('#mediaSearch').oninput=renderMedia;
-$('#uploadMedia').onclick=async ()=>{
+
+async function fileFingerprint(file){
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let hash='00000000';
+  try{ const d=await crypto.subtle.digest('SHA-256', bytes.slice(0, 65536)); hash=[...new Uint8Array(d)].slice(0,8).map(b=>b.toString(16).padStart(2,'0')).join(''); }catch{}
+  return {bytes, size:file.size, hash};
+}
+function replaceRefs(oldName, newName){
+  if(!oldName || !newName || oldName===newName) return 0;
+  let n=0;
+  const walk=v=>{
+    if(Array.isArray(v)){ for(let i=0;i<v.length;i++){ if(typeof v[i]==='string' && v[i]===oldName){ v[i]=newName; n++; } else walk(v[i]); } }
+    else if(v && typeof v==='object'){ for(const k of Object.keys(v)){ if(typeof v[k]==='string' && v[k]===oldName){ v[k]=newName; n++; } else walk(v[k]); } }
+  };
+  walk(state.data); return n;
+}
+function similarMedia(file, fp){
+  const name=file.name.toLowerCase();
+  const base=name.replace(/\.[^.]+$/,'');
+  return state.media.filter(m=>{
+    const mname=m.name.toLowerCase(); const mbase=mname.replace(/\.[^.]+$/,'');
+    const sameName=mname===name;
+    const sameBase=mbase===base;
+    const sameSize=m.size===fp.size;
+    return sameName || sameBase || sameSize;
+  }).map(m=>{
+    const reasons=[];
+    if(m.name.toLowerCase()===name) reasons.push('same filename');
+    if(m.name.toLowerCase().replace(/\.[^.]+$/,'')===base && m.name.toLowerCase()!==name) reasons.push('similar name');
+    if(m.size===fp.size) reasons.push('same size');
+    return {...m,reasons};
+  });
+}
+
+let staged=[];
+$('#stageMedia').onclick=async ()=>{
   const files = Array.from($('#mediaFiles').files||[]);
   if(!files.length) return alert('Select files first');
-  showStatus($('#status'), `Uploading ${files.length} file(s)...`, '');
+  if(!state.data) return showStatus($('#status'),'Connect and load data first.','err');
+  $('#mediaStage').innerHTML='<div class="muted">Analyzing files...</div>';
+  staged=[];
+  for(const f of files){
+    const fp=await fileFingerprint(f);
+    const sims=similarMedia(f,fp);
+    const exact=sims.find(m=>m.name.toLowerCase()===f.name.toLowerCase());
+    staged.push({file:f, fp, targetName: exact?exact.name:f.name, replace: exact?exact.name:'', sims});
+  }
+  renderStage();
+};
+
+function renderStage(){
+  const box=$('#mediaStage');
+  if(!staged.length){ box.innerHTML=''; return; }
+  const optsFor = (sel)=>['<option value="">— upload as new / keep name —</option>'].concat(state.media.map(m=>`<option value="${esc(m.name)}" ${m.name===sel?'selected':''}>${esc(m.name)}</option>`)).join('');
+  box.innerHTML = staged.map((s,i)=>{
+    const url=URL.createObjectURL(s.file);
+    const isVid=/\.(mp4|webm|mov)$/i.test(s.file.name);
+    const targetExt=(s.targetName.match(/\.[^.]+$/)||[''])[0].toLowerCase();
+    const srcExt=(s.file.name.match(/\.[^.]+$/)||[''])[0].toLowerCase();
+    const extWarn = (s.replace && targetExt && srcExt && targetExt!==srcExt) ? `<div class="status err" style="margin:.4rem 0">Extension mismatch: uploading ${esc(srcExt)} as ${esc(targetExt)}. Prefer same extension, or upload with the new extension and replace references.</div>` : '';
+    const warn=s.sims.length?`<div class="status" style="background:#3a3118;color:#ffe8a3;margin:.4rem 0">Possible match: ${s.sims.map(m=>`${esc(m.name)} (${esc(m.reasons.join(', '))})`).join('; ')}. Choose “Replace existing file” to overwrite it across the site.</div>${extWarn}`:extWarn;
+    return `<div class="card" style="padding:.75rem"><div class="grid grid-2"><div>${isVid?`<video src="${url}" controls style="width:100%;max-height:180px;object-fit:cover;border-radius:8px"></video>`:`<img src="${url}" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px">`}</div>
+    <div class="stack">
+      <div><label>Uploaded file</label><div class="small muted">${esc(s.file.name)} · ${(s.file.size/1024).toFixed(1)} KB</div></div>
+      <div><label>Save as filename (rename)</label><input data-stage-name="${i}" value="${esc(s.targetName)}"></div>
+      <div><label>Replace existing file in site/codebase</label><select data-stage-replace="${i}">${optsFor(s.replace)}</select></div>
+      ${warn}
+      <div class="row"><button class="btn btn-primary" data-stage-upload="${i}">Upload this file</button><button class="btn btn-ghost" data-stage-remove="${i}">Remove</button></div>
+    </div></div></div>`;
+  }).join('') + `<div class="row"><button class="btn btn-primary" id="uploadAllStaged">Upload all staged</button></div>`;
+  box.querySelectorAll('[data-stage-name]').forEach(el=>el.oninput=e=>{ staged[+e.target.dataset.stageName].targetName=e.target.value.trim(); });
+  box.querySelectorAll('[data-stage-replace]').forEach(el=>el.onchange=e=>{ const i=+e.target.dataset.stageReplace; staged[i].replace=e.target.value; if(staged[i].replace) staged[i].targetName=staged[i].replace; renderStage(); });
+  box.querySelectorAll('[data-stage-remove]').forEach(el=>el.onclick=e=>{ staged.splice(+e.target.dataset.stageRemove,1); renderStage(); });
+  box.querySelectorAll('[data-stage-upload]').forEach(el=>el.onclick=e=>uploadStaged(+e.target.dataset.stageUpload));
+  const all=$('#uploadAllStaged'); if(all) all.onclick=async ()=>{ while(staged.length) { await uploadStaged(0,true); } };
+}
+
+async function replaceRefsInRepoFiles(oldName, newName){
+  if(!oldName || !newName || oldName===newName) return [];
+  const files=['index.html','trip.html','app.js','styles.css','404.html','README.md','sitemap.xml','robots.txt'];
+  const changed=[];
   for(const f of files){
     try{
-      const buf = await f.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
-      const content = btoa(bin);
-      // check if exists to get sha
-      let sha; try{ const ex=await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f.name)}?ref=${encodeURIComponent(state.branch)}`); sha=ex.sha; }catch{}
-      await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f.name)}`, {method:'PUT', body:JSON.stringify({message:`Upload ${f.name} via admin`, content, branch:state.branch, ...(sha?{sha}:{})})});
-      showStatus($('#status'), `Uploaded ${f.name}`, 'ok');
-    }catch(err){ showStatus($('#status'), `Failed ${f.name}: ${err.message}`, 'err'); }
+      const j=await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f)}?ref=${encodeURIComponent(state.branch)}&t=${Date.now()}`);
+      const text=b64DecodeUtf8(j.content);
+      if(!text.includes(oldName)) continue;
+      const updated=text.split(oldName).join(newName);
+      await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f)}`, {method:'PUT', body:JSON.stringify({message:`Replace ${oldName} -> ${newName} in ${f} via admin`, content:b64EncodeUtf8(updated), sha:j.sha, branch:state.branch})});
+      changed.push(f);
+    }catch(e){ /* ignore missing/unwritable files */ }
   }
-  $('#mediaFiles').value='';
-  renderMedia();
-};
+  return changed;
+}
+
+async function uploadStaged(i, batch=false){
+  const s=staged[i]; if(!s) return;
+  if(!state.data) return showStatus($('#status'),'Connect and load data first.','err');
+  const target=(s.replace || s.targetName || s.file.name).trim();
+  if(!target) return alert('Filename required');
+  const replacing = s.replace || (state.media.some(m=>m.name===target) ? target : '');
+  if(replacing && !batch){ if(!confirm(`Replace ${replacing} with this upload? This will overwrite the file and update references across the site/codebase.`)) return; }
+  try{
+    showStatus($('#status'), `Uploading ${target}...`, '');
+    const bytes=s.fp.bytes; let bin=''; for(let j=0;j<bytes.length;j++) bin+=String.fromCharCode(bytes[j]);
+    const content=btoa(bin);
+    let sha; try{ const ex=await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(target)}?ref=${encodeURIComponent(state.branch)}&t=${Date.now()}`); sha=ex.sha; }catch{}
+    await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(target)}`, {method:'PUT', body:JSON.stringify({message:`Upload/replace ${target} via admin`, content, branch:state.branch, ...(sha?{sha}:{})})});
+    let refs=0; let changedFiles=[];
+    if(replacing && replacing!==target){
+      refs=replaceRefs(replacing, target);
+      changedFiles=await replaceRefsInRepoFiles(replacing, target);
+    }
+    if(refs>0){ markDirty(`Replaced ${replacing} with ${target} (${refs} data reference(s) updated).`); }
+    const extra = changedFiles.length ? ` Updated files: ${changedFiles.join(', ')}.` : '';
+    if(refs>0 || changedFiles.length) showStatus($('#status'), `Uploaded ${target}. ${refs} data.js reference(s) updated.${extra} Publish data.js to commit data changes.`, 'ok');
+    else showStatus($('#status'), `Uploaded ${target}${replacing?` (replaced ${replacing})`:''}.`, 'ok');
+    staged.splice(i,1);
+    renderStage();
+    await renderMedia();
+  }catch(err){ showStatus($('#status'), `Failed ${target}: ${err.message}`, 'err'); }
+}
 
 async function publish(){
   const msg = $('#commitMsg').value.trim() || 'Update site content via admin';
