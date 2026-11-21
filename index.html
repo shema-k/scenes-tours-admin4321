@@ -36,7 +36,7 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
 <div class="wrap">
   <div class="bar">
     <div class="brand">Scenes <span>Admin</span><div class="small muted">Separate admin for the main Scenes Tours website</div></div>
-    <div class="row"><span id="who" class="muted small"></span><button id="btnLogout" class="btn btn-ghost hidden">Disconnect</button></div>
+    <div class="row"><button id="quickPublish" class="btn btn-primary hidden">Publish draft</button><span id="who" class="muted small"></span><button id="btnLogout" class="btn btn-ghost hidden">Disconnect</button></div>
   </div>
 
   <div id="authView" class="card" style="max-width:760px">
@@ -58,6 +58,7 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
 
   <div id="appView" class="hidden">
     <div id="status" class="status hidden"></div>
+    <div id="dirty" class="status hidden" style="background:#3a3118;color:#ffe8a3">Draft changed. Click <b>Publish draft</b> to commit changes to the main website.</div>
     <div class="tabs" id="tabs"></div>
 
     <section id="tab-trips" class="tabview">
@@ -164,6 +165,9 @@ const TABS = [
   ['trips','Trips'],['media','Media'],['site','Site & Home'],['content','Content'],['team','Team'],['more','More'],['publish','Publish']
 ];
 
+let dirty=false;
+function markDirty(msg='Draft changed. Publish to commit to the main website.') { dirty=true; const d=$('#dirty'); d.innerHTML='Draft changed. <b>Publish draft</b> to commit changes to the main website.' + (msg?'<div class="small" style="margin-top:.25rem">'+esc(msg)+'</div>':''); d.classList.remove('hidden'); $('#quickPublish').classList.remove('hidden'); }
+function clearDirty(){ dirty=false; $('#dirty').classList.add('hidden'); $('#quickPublish').classList.add('hidden'); }
 function showStatus(el, msg, type='') { el.textContent = msg; el.className = 'status ' + (type||''); el.classList.remove('hidden'); }
 function hideStatus(el){ el.classList.add('hidden'); }
 function api(path, opts={}) {
@@ -307,6 +311,7 @@ async function loadRepo() {
   state.sha = j.sha;
   const text = b64DecodeUtf8(j.content);
   state.data = parseDataJs(text);
+  clearDirty();
   renderAll();
   showStatus($('#status'), `Loaded data.js from ${state.owner}/${state.repo}@${state.branch}`, 'ok');
 }
@@ -341,7 +346,7 @@ function renderTrips(){
   list.innerHTML = state.data.SEED_TRIPS.map(t=>`<div class="item"><div><b>${esc(t.title)}</b><span class="pill">${esc(t.type||'')}</span><div class="small muted">${esc(t.id)} · ${esc(t.region||'')}</div></div><div class="row"><button class="btn" data-edit="${esc(t.id)}">Edit</button><button class="btn btn-danger" data-del="${esc(t.id)}">Delete</button></div></div>`).join('');
   list.onclick = e=>{
     const ed=e.target.closest('[data-edit]'); if(ed){ openTrip(ed.dataset.edit); return; }
-    const del=e.target.closest('[data-del]'); if(del){ if(confirm('Delete trip '+del.dataset.del+'?')){ state.data.SEED_TRIPS = state.data.SEED_TRIPS.filter(t=>t.id!==del.dataset.del); if(state.currentTrip===del.dataset.del) { state.currentTrip=null; $('#tripEditor').innerHTML='<div class="muted">Select a trip.</div>'; } renderTrips(); } }
+    const del=e.target.closest('[data-del]'); if(del){ if(confirm('Delete trip '+del.dataset.del+'?')){ state.data.SEED_TRIPS = state.data.SEED_TRIPS.filter(t=>t.id!==del.dataset.del); if(state.currentTrip===del.dataset.del) { state.currentTrip=null; $('#tripEditor').innerHTML='<div class="muted">Select a trip.</div>'; } renderTrips(); markDirty('Trip deleted.'); } }
   };
 }
 function emptyTrip(){ return {id:'new-trip',type:'Safari',group:'Uganda',feature:'',title:'New trip',region:'',duration:'',kind:'request',price:null,bestTime:'',summary:'',desc:'',faq:[],media:{type:'image',src:''},highlights:[],includes:[],locations:[],activities:[],gallery:[],videos:[]}; }
@@ -428,7 +433,7 @@ function saveTrip(){
   if(idx>=0) state.data.SEED_TRIPS[idx]=t; else state.data.SEED_TRIPS.push(t);
   state.currentTrip = t.id;
   renderTrips(); openTrip(t.id);
-  showStatus($('#status'), 'Trip saved in editor. Go to Publish to commit data.js.', 'ok');
+  markDirty('Trip saved in draft.'); showStatus($('#status'), 'Trip saved in draft. Publish to commit to GitHub.', 'ok');
 }
 
 function renderSite(){
@@ -444,7 +449,7 @@ $('#saveSite').onclick=()=>{
   s.address=$('#siteAddress').value.trim(); s.map=$('#siteMap').value.trim();
   s.phones=linesToArr($('#sitePhones').value).map(l=>{const [label,tel,wa]=l.split('|').map(x=>x.trim()); return {label,tel,wa};}).filter(x=>x.label);
   s.social=linesToArr($('#siteSocial').value).map(l=>{const [name,url]=l.split('|').map(x=>x.trim()); return {name,url};}).filter(x=>x.name);
-  showStatus($('#status'),'Site details saved in editor. Publish to commit.','ok');
+  markDirty('Site details saved.'); showStatus($('#status'),'Site details saved in draft. Publish to commit.','ok');
 };
 
 function renderHome(){
@@ -459,7 +464,7 @@ $('#saveHome').onclick=()=>{
   state.data.LEGAL=state.data.LEGAL||{};
   state.data.LEGAL['Privacy Policy']=$('#legalPrivacy').value;
   state.data.LEGAL['Terms of Service']=$('#legalTerms').value;
-  showStatus($('#status'),'Home/content saved in editor. Publish to commit.','ok');
+  markDirty('Home/content saved.'); showStatus($('#status'),'Home/content saved in draft. Publish to commit.','ok');
 };
 
 function simpleListEditor(containerId, items, fields, onChange){
@@ -483,12 +488,12 @@ $('#addWorld').onclick=()=>{state.data.WORLD.push({t:'',img:'',d:''}); renderWor
 $('#addFaq').onclick=()=>{state.data.FAQ.push({q:'',a:''}); renderFaq();};
 $('#addGuide').onclick=()=>{state.data.GUIDES.push({id:'',title:'',date:'',read:'',img:'',place:'',excerpt:'',body:[]}); renderGuides();};
 $('#addNews').onclick=()=>{state.data.TRIP_NEWS.push({trip:'',kicker:'',headline:'',note:''}); renderNews();};
-$('#saveServices').onclick=()=>showStatus($('#status'),'Services saved in editor.','ok');
-$('#saveWays').onclick=()=>showStatus($('#status'),'Ways saved in editor.','ok');
-$('#saveWorld').onclick=()=>showStatus($('#status'),'Destinations saved in editor.','ok');
-$('#saveFaq').onclick=()=>showStatus($('#status'),'FAQ saved in editor.','ok');
-$('#saveGuides').onclick=()=>showStatus($('#status'),'Guides saved in editor. Body arrays preserved; edit in data.js preview if needed.','ok');
-$('#saveNews').onclick=()=>showStatus($('#status'),'News saved in editor.','ok');
+$('#saveServices').onclick=()=>markDirty('Services saved.'); showStatus($('#status'),'Services saved in draft. Publish to commit.','ok');
+$('#saveWays').onclick=()=>markDirty('Ways saved.'); showStatus($('#status'),'Ways saved in draft. Publish to commit.','ok');
+$('#saveWorld').onclick=()=>markDirty('Destinations saved.'); showStatus($('#status'),'Destinations saved in draft. Publish to commit.','ok');
+$('#saveFaq').onclick=()=>markDirty('FAQ saved.'); showStatus($('#status'),'FAQ saved in draft. Publish to commit.','ok');
+$('#saveGuides').onclick=()=>markDirty('Guides saved.'); showStatus($('#status'),'Guides saved in draft. Publish to commit.','ok');
+$('#saveNews').onclick=()=>markDirty('News saved.'); showStatus($('#status'),'News saved in draft. Publish to commit.','ok');
 
 function renderTeam(){
   const t = state.data.TEAM;
@@ -522,7 +527,7 @@ $('#saveTeam').onclick=()=>{
   const t=state.data.TEAM; t.lead=t.lead||{}; t.deputy=t.deputy||{};
   t.lead.name=$('#teamLeadName').value.trim(); t.lead.title=$('#teamLeadTitle').value.trim(); t.lead.photo=$('#teamLeadPhoto').value.trim(); t.lead.bio=$('#teamLeadBio').value.trim();
   t.deputy.name=$('#teamDepName').value.trim(); t.deputy.title=$('#teamDepTitle').value.trim(); t.deputy.photo=$('#teamDepPhoto').value.trim(); t.deputy.bio=$('#teamDepBio').value.trim();
-  showStatus($('#status'),'Team saved in editor.','ok');
+  markDirty('Team saved.'); showStatus($('#status'),'Team saved in draft. Publish to commit.','ok');
 };
 
 let renderReviewsRef;
@@ -532,11 +537,11 @@ function renderMore(){
   $('#publishedJson').value=JSON.stringify(state.data.PUBLISHED||{trips:[],dates:{},reviews:[]}, null, 2);
   renderReviewsRef=simpleListEditor('reviewsEditor', state.data.REVIEWS, [{key:'name',label:'Name'},{key:'from',label:'From'},{key:'trip',label:'Trip ID'},{key:'rating',label:'Rating (1-5)'},{key:'date',label:'Date'},{key:'text',label:'Text',type:'textarea'}]);
 }
-$('#saveStory').onclick=()=>{ state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); showStatus($('#status'),'Story saved.','ok'); };
-$('#saveStats').onclick=()=>{ state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); showStatus($('#status'),'Stats saved.','ok'); };
+$('#saveStory').onclick=()=>{ state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); markDirty('Story saved.'); showStatus($('#status'),'Story saved in draft. Publish to commit.','ok'); };
+$('#saveStats').onclick=()=>{ state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); markDirty('Stats saved.'); showStatus($('#status'),'Stats saved in draft. Publish to commit.','ok'); };
 $('#addReview').onclick=()=>{ state.data.REVIEWS.push({name:'',from:'',trip:'',rating:5,text:'',date:''}); renderMore(); };
-$('#saveReviews').onclick=()=>{ state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); showStatus($('#status'),'Reviews saved.','ok'); };
-$('#savePublished').onclick=()=>{ try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); showStatus($('#status'),'Published JSON saved.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
+$('#saveReviews').onclick=()=>{ state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); markDirty('Reviews saved.'); showStatus($('#status'),'Reviews saved in draft. Publish to commit.','ok'); };
+$('#savePublished').onclick=()=>{ try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); markDirty('Published JSON saved.'); showStatus($('#status'),'Published JSON saved in draft. Publish to commit.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
 
 async function renderMedia(){
   const box=$('#mediaList'); box.innerHTML='<div class="muted">Loading media...</div>';
@@ -595,12 +600,13 @@ async function publish(){
     await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js`, {method:'PUT', body:JSON.stringify({message:msg, content, sha:state.sha, branch:state.branch})});
     const after = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
     state.sha = after.sha;
-    showStatus(ps,'Published successfully to main website repo.','ok');
+    clearDirty(); showStatus(ps,'Published successfully to main website repo.','ok');
     showStatus($('#status'),'Published data.js to GitHub.','ok');
   }catch(e){ showStatus(ps, e.message, 'err'); }
 }
 
 $('#publishBtn').onclick=publish;
+$('#quickPublish').onclick=()=>{ setTab('publish'); publish(); };
 $('#reloadBtn').onclick=async ()=>{ try{ await loadRepo(); showStatus($('#publishStatus'),'Reloaded from GitHub.','ok'); }catch(e){ showStatus($('#publishStatus'),e.message,'err'); } };
 $('#btnConnect').onclick=connect;
 $('#btnLogout').onclick=logout;
