@@ -172,6 +172,7 @@ function showStatus(el, msg, type='') { el.textContent = msg; el.className = 'st
 function hideStatus(el){ el.classList.add('hidden'); }
 function api(path, opts={}) {
   return fetch(`https://api.github.com${path}`, {
+    cache: 'no-store',
     ...opts,
     headers: {
       'Accept':'application/vnd.github+json',
@@ -307,7 +308,7 @@ function initTabs(){
 
 async function loadRepo() {
   showStatus($('#status'), 'Loading data.js from GitHub...', '');
-  const j = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+  const j = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}&t=${Date.now()}`);
   state.sha = j.sha;
   const text = b64DecodeUtf8(j.content);
   state.data = parseDataJs(text);
@@ -606,13 +607,22 @@ $('#uploadMedia').onclick=async ()=>{
 async function publish(){
   const msg = $('#commitMsg').value.trim() || 'Update site content via admin';
   const ps=$('#publishStatus');
-  try{
-    showStatus(ps,'Preparing data.js...','');
-    const latest = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+  const put = async () => {
+    const latest = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}&t=${Date.now()}`);
     state.sha = latest.sha;
     const content = b64EncodeUtf8(serializeDataJs(state.data));
-    await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js`, {method:'PUT', body:JSON.stringify({message:msg, content, sha:state.sha, branch:state.branch})});
-    const after = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+    return apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js`, {method:'PUT', body:JSON.stringify({message:msg, content, sha:state.sha, branch:state.branch})});
+  };
+  try{
+    showStatus(ps,'Publishing data.js...','');
+    try { await put(); }
+    catch(e){
+      if(/does not match|sha/i.test(e.message||'')){
+        showStatus(ps,'SHA changed, retrying once...','');
+        await put();
+      } else throw e;
+    }
+    const after = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}&t=${Date.now()}`);
     state.sha = after.sha;
     clearDirty(); showStatus(ps,'Published successfully to main website repo.','ok');
     showStatus($('#status'),'Published data.js to GitHub.','ok');
