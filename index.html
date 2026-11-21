@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://raw.githubusercontent.com https://github.com; media-src 'self' blob: https://raw.githubusercontent.com; connect-src 'self' https://api.github.com https://raw.githubusercontent.com; font-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<title>Scenes Admin</title>
+<style>
+:root{--bg:#0f1f19;--panel:#162a22;--panel2:#1c3329;--line:#29463a;--text:#eef5f0;--muted:#a8beb2;--gold:#d4a84b;--green:#2f7a57;--red:#c45b4a;--radius:14px}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0b1813,#12251d);color:var(--text)}
+a{color:#f0d28a}button,input,select,textarea{font:inherit}input,select,textarea{width:100%;padding:.7rem .8rem;border-radius:10px;border:1px solid var(--line);background:#102219;color:var(--text)}
+textarea{min-height:110px;resize:vertical}label{display:block;margin:.45rem 0 .25rem;color:var(--muted);font-size:.85rem}
+.wrap{max-width:1280px;margin:0 auto;padding:1rem}.bar{display:flex;gap:1rem;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--line);margin-bottom:1rem}
+.brand{font-weight:700;letter-spacing:.02em}.brand span{color:var(--gold)}.muted{color:var(--muted)}.small{font-size:.85rem}
+.grid{display:grid;gap:1rem}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+.card{background:rgba(22,42,34,.92);border:1px solid var(--line);border-radius:var(--radius);padding:1rem}.card h2,.card h3{margin:.1rem 0 .8rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;padding:.65rem 1rem;border-radius:10px;border:1px solid var(--line);background:#193126;color:var(--text);cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:not-allowed}.btn-primary{background:var(--gold);color:#182218;border-color:transparent;font-weight:700}.btn-danger{background:#3a1f1b;border-color:#6a332c;color:#ffd5cf}.btn-ghost{background:transparent}
+.row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}.stack{display:flex;flex-direction:column;gap:.75rem}
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 1rem}.tab{padding:.55rem .9rem;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}.tab.active{background:var(--gold);color:#182218;border-color:transparent;font-weight:700}
+.hidden{display:none!important}.list{display:flex;flex-direction:column;gap:.5rem}.item{display:flex;justify-content:space-between;gap:.8rem;align-items:center;padding:.75rem;border:1px solid var(--line);border-radius:10px;background:var(--panel2)}
+.item b{display:block}.pill{display:inline-block;padding:.15rem .5rem;border-radius:999px;background:#243f33;color:var(--muted);font-size:.75rem;margin-left:.35rem}
+.status{padding:.7rem .9rem;border-radius:10px;margin:.6rem 0;background:#132920;color:var(--muted);white-space:pre-wrap}.status.err{background:#3a1f1b;color:#ffd5cf}.status.ok{background:#153224;color:#cdebd9}
+table{width:100%;border-collapse:collapse}th,td{padding:.55rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:.9rem}th{color:var(--muted);font-weight:600}
+details{border:1px solid var(--line);border-radius:10px;padding:.6rem .8rem;background:#12261d}summary{cursor:pointer;font-weight:600}
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem}.media-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#11231b}.media-card img,.media-card video{width:100%;height:110px;object-fit:cover;display:block;background:#09130f}.media-card .p{padding:.5rem}.media-card .n{font-size:.78rem;word-break:break-all}
+.kbd{font-family:ui-monospace,SFMono-Regular,monospace;background:#0b1712;padding:.15rem .35rem;border-radius:6px;border:1px solid var(--line)}
+hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
+.warn{color:#ffdca8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <div class="brand">Scenes <span>Admin</span><div class="small muted">Separate admin for the main Scenes Tours website</div></div>
+    <div class="row"><span id="who" class="muted small"></span><button id="btnLogout" class="btn btn-ghost hidden">Disconnect</button></div>
+  </div>
+
+  <div id="authView" class="card" style="max-width:760px">
+    <h2>Connect to GitHub</h2>
+    <p class="muted">This admin edits the main website repository through the GitHub API. It is hosted separately, but it needs a GitHub fine-grained Personal Access Token with <b>Contents: Read and write</b> on the main website repo. The token stays in this browser session unless you choose to remember it on this device.</p>
+    <div class="grid grid-2">
+      <div><label>GitHub token</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_..."></div>
+      <div><label>Owner</label><input id="owner" value="shema-k"></div>
+      <div><label>Main website repo</label><input id="repo" value="scenes-tours"></div>
+      <div><label>Branch</label><input id="branch" value="main"></div>
+    </div>
+    <label class="row" style="margin-top:.7rem"><input id="remember" type="checkbox" style="width:auto"> Remember token on this device (use only on a private device)</label>
+    <div class="row" style="margin-top:.8rem"><button id="btnConnect" class="btn btn-primary">Connect</button></div>
+    <div id="authStatus" class="status hidden"></div>
+    <details style="margin-top:1rem"><summary>Security note</summary>
+      <p class="small muted">This is a static admin. The page itself can be public, but nothing can be published without a valid GitHub token. Use a fine-grained token limited to the main website repo, short expiration, and a private device. For stronger security, put this admin behind server-side authentication (Cloudflare Access/Netlify/Vercel auth/VPN).</p>
+    </details>
+  </div>
+
+  <div id="appView" class="hidden">
+    <div id="status" class="status hidden"></div>
+    <div class="tabs" id="tabs"></div>
+
+    <section id="tab-trips" class="tabview">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="row" style="justify-content:space-between"><h2>Trips</h2><button class="btn btn-primary" id="newTrip">New trip</button></div>
+          <div id="tripList" class="list"></div>
+        </div>
+        <div class="card">
+          <h2 id="tripEditorTitle">Trip editor</h2>
+          <div id="tripEditor" class="muted">Select a trip or create a new one.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-media" class="tabview hidden">
+      <div class="card">
+        <div class="row" style="justify-content:space-between"><h2>Media</h2><div class="row"><input id="mediaSearch" placeholder="Filter files..." style="width:220px"><button class="btn" id="refreshMedia">Refresh</button></div></div>
+        <p class="muted small">Upload images/videos to the main website repo. Deleting removes the file from the repo (commit). Check trip references before deleting.</p>
+        <div class="row" style="margin-bottom:.8rem"><input id="mediaFiles" type="file" multiple accept="image/*,video/*"><button class="btn btn-primary" id="uploadMedia">Upload selected</button></div>
+        <div id="mediaList" class="media-grid"></div>
+      </div>
+    </section>
+
+    <section id="tab-site" class="tabview hidden">
+      <div class="grid grid-2">
+        <div class="card stack">
+          <h2>Site details</h2>
+          <div><label>Site name</label><input id="siteName"></div>
+          <div><label>Tagline</label><input id="siteTagline"></div>
+          <div><label>Email</label><input id="siteEmail"></div>
+          <div><label>Address</label><textarea id="siteAddress"></textarea></div>
+          <div><label>Map embed URL</label><input id="siteMap"></div>
+          <div><label>Phones (one per line: label|tel|wa)</label><textarea id="sitePhones"></textarea></div>
+          <div><label>Social (one per line: name|url)</label><textarea id="siteSocial"></textarea></div>
+          <button class="btn btn-primary" id="saveSite">Save site details</button>
+        </div>
+        <div class="card stack">
+          <h2>Home & content</h2>
+          <div><label>Hero slides (one image filename per line)</label><textarea id="heroSlides"></textarea></div>
+          <div><label>Places (one per line)</label><textarea id="places"></textarea></div>
+          <div><label>Legal: Privacy Policy (HTML allowed)</label><textarea id="legalPrivacy"></textarea></div>
+          <div><label>Legal: Terms of Service (HTML allowed)</label><textarea id="legalTerms"></textarea></div>
+          <button class="btn btn-primary" id="saveHome">Save home/content</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-content" class="tabview hidden">
+      <div class="grid grid-2">
+        <div class="card stack"><h2>Services</h2><div id="servicesEditor"></div><button class="btn" id="addService">Add service</button><button class="btn btn-primary" id="saveServices">Save services</button></div>
+        <div class="card stack"><h2>Ways / quick categories</h2><div id="waysEditor"></div><button class="btn" id="addWay">Add way</button><button class="btn btn-primary" id="saveWays">Save ways</button></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card stack"><h2>Destinations (WORLD)</h2><div id="worldEditor"></div><button class="btn" id="addWorld">Add destination</button><button class="btn btn-primary" id="saveWorld">Save destinations</button></div>
+        <div class="card stack"><h2>FAQ</h2><div id="faqEditor"></div><button class="btn" id="addFaq">Add FAQ</button><button class="btn btn-primary" id="saveFaq">Save FAQ</button></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card stack"><h2>Journal / Guides</h2><div id="guidesEditor"></div><button class="btn" id="addGuide">Add guide</button><button class="btn btn-primary" id="saveGuides">Save guides</button></div>
+        <div class="card stack"><h2>Trip News / Journal cards</h2><div id="newsEditor"></div><button class="btn" id="addNews">Add news card</button><button class="btn btn-primary" id="saveNews">Save news</button></div>
+      </div>
+    </section>
+
+    <section id="tab-team" class="tabview hidden">
+      <div class="card stack">
+        <h2>Team</h2>
+        <p class="muted small">Edit leadership and departments. Photos should be filenames uploaded in Media.</p>
+        <div id="teamEditor"></div>
+        <button class="btn btn-primary" id="saveTeam">Save team</button>
+      </div>
+    </section>
+
+    <section id="tab-more" class="tabview hidden">
+      <div class="grid grid-2">
+        <div class="card stack"><h2>Story paragraphs</h2><label>One paragraph per line break block (separate by blank line)</label><textarea id="storyText" style="min-height:180px"></textarea><button class="btn btn-primary" id="saveStory">Save story</button></div>
+        <div class="card stack"><h2>Stats</h2><label>One per line: number | suffix | label</label><textarea id="statsText"></textarea><button class="btn btn-primary" id="saveStats">Save stats</button></div>
+      </div>
+      <div class="grid grid-2" style="margin-top:1rem">
+        <div class="card stack"><h2>Reviews (REVIEWS)</h2><div id="reviewsEditor"></div><button class="btn" id="addReview">Add review</button><button class="btn btn-primary" id="saveReviews">Save reviews</button></div>
+        <div class="card stack"><h2>Published (PUBLISHED JSON)</h2><p class="muted small">Advanced: trips/dates/reviews published directly. Edit as JSON.</p><textarea id="publishedJson" style="min-height:220px;font-family:ui-monospace,monospace;font-size:12px"></textarea><button class="btn btn-primary" id="savePublished">Save published</button></div>
+      </div>
+    </section>
+
+    <section id="tab-publish" class="tabview hidden">
+      <div class="card stack">
+        <h2>Publish</h2>
+        <p class="muted">Publishing commits <span class="kbd">data.js</span> to the main website repo. Media uploads/deletes are committed immediately when you perform them.</p>
+        <label>Commit message</label><input id="commitMsg" value="Update site content via admin">
+        <div class="row"><button class="btn btn-primary" id="publishBtn">Publish data.js</button><button class="btn" id="reloadBtn">Reload from GitHub</button></div>
+        <div id="publishStatus" class="status hidden"></div>
+        <details><summary>Preview generated data.js</summary><textarea id="dataPreview" style="min-height:320px;font-family:ui-monospace,monospace;font-size:12px"></textarea></details>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const uid = () => 'id-' + Math.random().toString(36).slice(2,10);
+const state = { token:'', owner:'shema-k', repo:'scenes-tours', branch:'main', data:null, sha:null, media:[], currentTrip:null };
+
+const TABS = [
+  ['trips','Trips'],['media','Media'],['site','Site & Home'],['content','Content'],['team','Team'],['more','More'],['publish','Publish']
+];
+
+function showStatus(el, msg, type='') { el.textContent = msg; el.className = 'status ' + (type||''); el.classList.remove('hidden'); }
+function hideStatus(el){ el.classList.add('hidden'); }
+function api(path, opts={}) {
+  return fetch(`https://api.github.com${path}`, {
+    ...opts,
+    headers: {
+      'Accept':'application/vnd.github+json',
+      'Authorization': `Bearer ${state.token}`,
+      'X-GitHub-Api-Version':'2022-11-28',
+      ...(opts.headers||{})
+    }
+  });
+}
+async function apiJson(path, opts={}) {
+  const r = await api(path, opts);
+  const t = await r.text();
+  let j; try{ j = t ? JSON.parse(t) : null; } catch { j = { raw:t }; }
+  if(!r.ok) throw new Error(j?.message || t || r.statusText);
+  return j;
+}
+function b64EncodeUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUtf8(b64){ return decodeURIComponent(escape(atob(b64.replace(/\n/g,'')))); }
+
+function parseDataJs(text) {
+  const fn = new Function(text + `
+    return {SITE,SEED_TRIPS,PLACES,LEGAL,PUBLISHED,REVIEWS,STORY,STATS,SERVICES,HERO_SLIDES,WAYS,GUIDES,TRIP_NEWS,WORLD,TEAM,FAQ};
+  `);
+  return fn();
+}
+
+const FIXED_DB = `const DB = {
+  KEY: 'stt_db_v1',
+  load() { try { const x = JSON.parse(localStorage.getItem(this.KEY)); return { trips: x.trips || [], dates: x.dates || {}, reviews: x.reviews || [] }; } catch { return { trips: [], dates: {}, reviews: [] }; } },
+  /* Customer feedback: published reviews plus any added in the private editor. Each: { name, from, trip (trip id), rating 1-5, text, date } */
+  reviews() { return REVIEWS.concat(PUBLISHED.reviews || [], this.load().reviews).filter(r => r && r.text && r.rating); },
+  save(x) { try { localStorage.setItem(this.KEY, JSON.stringify(x)); return true; } catch { return false; } },
+  /* Every trip, with all of its departure dates sorted (seed + published + local preview edits). */
+  trips() {
+    const local = this.load();
+    return SEED_TRIPS.concat(PUBLISHED.trips, local.trips).map(t => {
+      const deps = t.start ? [{ start: t.start, end: t.end || t.start }] : [];
+      [].concat(PUBLISHED.dates[t.id] || [], local.dates[t.id] || []).forEach(x => deps.push(x));
+      deps.sort((a, b) => a.start.localeCompare(b.start));
+      return Object.assign({}, t, { deps, kind: deps.length && t.kind !== 'yearround' ? 'dated' : t.kind });
+    });
+  },
+  /* Every place name known to the database. */
+  places() { return [...new Set([...PLACES, ...TRIPS.flatMap(t => [t.region, ...(t.locations || [])])])]; },
+  /* Search index: one entry per distinct label, with the trips it belongs to. */
+  terms() {
+    const m = new Map();
+    const add = (label, kind, id) => { if (!label) return; const k = (label + kind).toLowerCase(); if (!m.has(k)) m.set(k, { label, kind, ids: new Set() }); m.get(k).ids.add(id); };
+    TRIPS.forEach(t => {
+      add(t.title, 'Trip', t.id); add(t.region, 'Destination', t.id); add(t.type, 'Type', t.id);
+      (t.locations || []).forEach(x => add(x, 'Place', t.id)); (t.activities || []).forEach(x => add(x, 'Activity', t.id));
+      (t.highlights || []).forEach(x => add(x, 'Highlight', t.id)); (t.includes || []).forEach(x => add(x, 'Included', t.id));
+    });
+    return [...m.values()].map(e => ({ label: e.label, kind: e.kind, ids: [...e.ids] }));
+  }
+};
+const TRIPS = DB.trips();
+
+/* Media finder: if a file is not where the site expects it, try other likely folders, extensions and letter-cases. */
+function mediaCandidates(src, alts = []) {
+  const out = [], add = p => { if (p && !out.includes(p)) out.push(p); };
+  let learned = ''; try { learned = localStorage.getItem('stt_mdir') || ''; } catch {}
+  const dirs = ['images/', 'img/', 'assets/', 'media/', 'photos/', 'videos/', 'pictures/', 'uploads/'];
+  add(src);
+  [src, ...alts].forEach(base => {
+    const m = base.match(/^(.*\\/)?([^/]+?)(\\.[A-Za-z0-9]+)?$/); if (!m) return;
+    const stem = m[2], ext = m[3] || '', video = /^\\.(mp4|webm|mov|m4v)$/i.test(ext);
+    const others = video ? ['.mp4', '.MP4', '.webm', '.mov'] : ['.jpg', '.jpeg', '.png', '.webp', '.JPG', '.JPEG', '.PNG'];
+    add(base); add(learned + stem + ext);
+    dirs.forEach(d => add(d + stem + ext));
+    others.forEach(e => add(stem + e));
+    others.forEach(e => add(learned + stem + e));
+    [stem.toLowerCase(), stem[0].toUpperCase() + stem.slice(1)].forEach(s => { add(s + ext); others.forEach(e => add(s + e)); });
+    ['images/', 'photos/'].forEach(d => others.forEach(e => add(d + stem + e)));
+  });
+  return out.slice(0, 48);
+}`;
+
+function js(obj, indent=2) { return JSON.stringify(obj, null, indent); }
+
+function serializeDataJs(d) {
+  return `/* Scenes Tours & Travels — content data. Edit with the admin or carefully by hand. */
+const SITE = ${js(d.SITE)};
+
+const SEED_TRIPS = ${js(d.SEED_TRIPS)};
+
+const PLACES = ${js(d.PLACES)};
+
+const LEGAL = ${js(d.LEGAL)};
+
+const PUBLISHED = ${js(d.PUBLISHED)};
+/* Real customer reviews go here (or add them in the private editor). Example: { name: 'Name', from: 'Kampala', trip: 'queen-elizabeth', rating: 5, text: 'Their words.', date: 'Aug 2026' } */
+const REVIEWS = ${js(d.REVIEWS)};
+
+${FIXED_DB}
+
+/* ---------- Company details (from the 2026 brochure). Edit here and the whole site updates. ---------- */
+const STORY = ${js(d.STORY)};
+
+const STATS = ${js(d.STATS)};
+
+const SERVICES = ${js(d.SERVICES)};
+
+/* Hero background rotation (text stays fixed for a stable headline) */
+const HERO_SLIDES = ${js(d.HERO_SLIDES)};
+
+/* Four quick ways into the catalogue, shown above the packages */
+const WAYS = ${js(d.WAYS)};
+
+const GUIDES = ${js(d.GUIDES)};
+
+/* The travel desk. Each story points at a real trip and can be booked from the card. */
+const TRIP_NEWS = ${js(d.TRIP_NEWS)};
+
+const WORLD = ${js(d.WORLD)};
+
+const TEAM = ${js(d.TEAM)};
+
+const FAQ = ${js(d.FAQ)};
+`;
+}
+
+function setTab(id){
+  $$('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
+  $$('.tabview').forEach(v=>v.classList.toggle('hidden', v.id !== 'tab-'+id));
+  if(id==='media') renderMedia();
+  if(id==='publish') $('#dataPreview').value = serializeDataJs(state.data);
+}
+function initTabs(){
+  const tabs = $('#tabs'); tabs.innerHTML = TABS.map(([id,label],i)=>`<button class="tab ${i?'':'active'}" data-tab="${id}">${label}</button>`).join('');
+  tabs.onclick = e=>{ const b=e.target.closest('.tab'); if(b) setTab(b.dataset.tab); };
+}
+
+async function loadRepo() {
+  showStatus($('#status'), 'Loading data.js from GitHub...', '');
+  const j = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+  state.sha = j.sha;
+  const text = b64DecodeUtf8(j.content);
+  state.data = parseDataJs(text);
+  renderAll();
+  showStatus($('#status'), `Loaded data.js from ${state.owner}/${state.repo}@${state.branch}`, 'ok');
+}
+
+async function connect() {
+  state.token = $('#token').value.trim();
+  state.owner = $('#owner').value.trim();
+  state.repo = $('#repo').value.trim();
+  state.branch = $('#branch').value.trim() || 'main';
+  if(!state.token) return showStatus($('#authStatus'), 'Token required.', 'err');
+  try {
+    showStatus($('#authStatus'), 'Connecting...', '');
+    const me = await apiJson('/user');
+    await loadRepo();
+    $('#who').textContent = `${me.login} → ${state.owner}/${state.repo}`;
+    $('#authView').classList.add('hidden');
+    $('#appView').classList.remove('hidden');
+    $('#btnLogout').classList.remove('hidden');
+    if($('#remember').checked) localStorage.setItem('scenes_admin', JSON.stringify({token:state.token,owner:state.owner,repo:state.repo,branch:state.branch}));
+    else localStorage.removeItem('scenes_admin');
+    initTabs();
+  } catch(e) { showStatus($('#authStatus'), e.message, 'err'); }
+}
+
+function logout(){ localStorage.removeItem('scenes_admin'); location.reload(); }
+
+function renderAll(){ renderTrips(); renderSite(); renderHome(); renderServices(); renderWays(); renderWorld(); renderFaq(); renderGuides(); renderNews(); renderTeam(); renderMore(); }
+
+function tripById(id){ return state.data.SEED_TRIPS.find(t=>t.id===id); }
+function renderTrips(){
+  const list = $('#tripList');
+  list.innerHTML = state.data.SEED_TRIPS.map(t=>`<div class="item"><div><b>${esc(t.title)}</b><span class="pill">${esc(t.type||'')}</span><div class="small muted">${esc(t.id)} · ${esc(t.region||'')}</div></div><div class="row"><button class="btn" data-edit="${esc(t.id)}">Edit</button><button class="btn btn-danger" data-del="${esc(t.id)}">Delete</button></div></div>`).join('');
+  list.onclick = e=>{
+    const ed=e.target.closest('[data-edit]'); if(ed){ openTrip(ed.dataset.edit); return; }
+    const del=e.target.closest('[data-del]'); if(del){ if(confirm('Delete trip '+del.dataset.del+'?')){ state.data.SEED_TRIPS = state.data.SEED_TRIPS.filter(t=>t.id!==del.dataset.del); if(state.currentTrip===del.dataset.del) { state.currentTrip=null; $('#tripEditor').innerHTML='<div class="muted">Select a trip.</div>'; } renderTrips(); } }
+  };
+}
+function emptyTrip(){ return {id:'new-trip',type:'Safari',group:'Uganda',feature:'',title:'New trip',region:'',duration:'',kind:'request',price:null,bestTime:'',summary:'',desc:'',faq:[],media:{type:'image',src:''},highlights:[],includes:[],locations:[],activities:[],gallery:[],videos:[]}; }
+
+function openTrip(id){
+  const t = tripById(id) || emptyTrip();
+  state.currentTrip = t.id;
+  $('#tripEditorTitle').textContent = 'Edit: ' + t.title;
+  const lines = arr => (arr||[]).join('\n');
+  const gallery = (t.gallery||[]).map(g=>`${g.src||''} | ${g.cap||''}`).join('\n');
+  const faq = (t.faq||[]).map(f=>`${f.q||''} :: ${f.a||''}`).join('\n');
+  $('#tripEditor').innerHTML = `
+    <div class="grid grid-2">
+      <div><label>ID</label><input id="t_id" value="${esc(t.id)}"></div>
+      <div><label>Type</label><input id="t_type" value="${esc(t.type||'')}"></div>
+      <div><label>Group</label><input id="t_group" value="${esc(t.group||'')}"></div>
+      <div><label>Region</label><input id="t_region" value="${esc(t.region||'')}"></div>
+      <div><label>Title</label><input id="t_title" value="${esc(t.title||'')}"></div>
+      <div><label>Duration</label><input id="t_duration" value="${esc(t.duration||'')}"></div>
+      <div><label>Kind (dated/yearround/request/tbc)</label><input id="t_kind" value="${esc(t.kind||'request')}"></div>
+      <div><label>Feature image</label><input id="t_feature" value="${esc(t.feature||'')}"></div>
+      <div><label>Start date</label><input id="t_start" value="${esc(t.start||'')}"></div>
+      <div><label>End date</label><input id="t_end" value="${esc(t.end||'')}"></div>
+      <div><label>Pickup</label><input id="t_pickup" value="${esc(t.pickup||'')}"></div>
+      <div><label>Price (JSON or empty for null)</label><input id="t_price" value="${esc(t.price?JSON.stringify(t.price):'')}"></div>
+    </div>
+    <label>Best time</label><textarea id="t_bestTime">${esc(t.bestTime||'')}</textarea>
+    <label>Summary</label><textarea id="t_summary">${esc(t.summary||'')}</textarea>
+    <label>Description</label><textarea id="t_desc">${esc(t.desc||'')}</textarea>
+    <div class="grid grid-2">
+      <div><label>Media type (image/video)</label><input id="t_mediaType" value="${esc(t.media?.type||'image')}"></div>
+      <div><label>Media src</label><input id="t_mediaSrc" value="${esc(t.media?.src||'')}"></div>
+      <div><label>Media poster</label><input id="t_mediaPoster" value="${esc(t.media?.poster||'')}"></div>
+      <div><label>Media preview</label><input id="t_mediaPreview" value="${esc(t.media?.preview||'')}"></div>
+    </div>
+    <label>Highlights (one per line)</label><textarea id="t_highlights">${esc(lines(t.highlights))}</textarea>
+    <label>Includes (one per line)</label><textarea id="t_includes">${esc(lines(t.includes))}</textarea>
+    <label>Locations (one per line)</label><textarea id="t_locations">${esc(lines(t.locations))}</textarea>
+    <label>Activities (one per line)</label><textarea id="t_activities">${esc(lines(t.activities))}</textarea>
+    <label>Gallery (one per line: src | caption)</label><textarea id="t_gallery">${esc(gallery)}</textarea>
+    <label>Videos (one filename per line)</label><textarea id="t_videos">${esc(lines(t.videos))}</textarea>
+    <label>FAQ (one per line: question :: answer)</label><textarea id="t_faq">${esc(faq)}</textarea>
+    <div class="row" style="margin-top:.8rem"><button class="btn btn-primary" id="saveTrip">Save trip</button><button class="btn btn-ghost" id="dupTrip">Duplicate</button></div>
+  `;
+  $('#saveTrip').onclick = saveTrip;
+  $('#dupTrip').onclick = ()=>{ const copy = collectTrip(); copy.id = copy.id + '-copy'; copy.title = copy.title + ' (copy)'; state.data.SEED_TRIPS.push(copy); renderTrips(); openTrip(copy.id); };
+}
+
+function linesToArr(v){ return v.split('\n').map(s=>s.trim()).filter(Boolean); }
+function collectTrip(){
+  let price = null; const p = $('#t_price').value.trim(); if(p){ try{ price = JSON.parse(p); } catch{ alert('Invalid price JSON'); throw new Error('bad price'); } }
+  const t = {
+    id: $('#t_id').value.trim(),
+    type: $('#t_type').value.trim(),
+    group: $('#t_group').value.trim(),
+    title: $('#t_title').value.trim(),
+    region: $('#t_region').value.trim(),
+    duration: $('#t_duration').value.trim(),
+    kind: $('#t_kind').value.trim() || 'request',
+    summary: $('#t_summary').value.trim(),
+    desc: $('#t_desc').value.trim(),
+  };
+  const feature = $('#t_feature').value.trim(); if(feature) t.feature = feature;
+  const start=$('#t_start').value.trim(), end=$('#t_end').value.trim(), pickup=$('#t_pickup').value.trim(), best=$('#t_bestTime').value.trim();
+  if(start) t.start=start; if(end) t.end=end; if(pickup) t.pickup=pickup; if(best) t.bestTime=best;
+  t.price = price;
+  const media = { type: $('#t_mediaType').value.trim()||'image', src: $('#t_mediaSrc').value.trim() };
+  const poster=$('#t_mediaPoster').value.trim(), preview=$('#t_mediaPreview').value.trim();
+  if(poster) media.poster=poster; if(preview) media.preview=preview;
+  t.media = media;
+  t.highlights = linesToArr($('#t_highlights').value);
+  t.includes = linesToArr($('#t_includes').value);
+  t.locations = linesToArr($('#t_locations').value);
+  t.activities = linesToArr($('#t_activities').value);
+  t.gallery = linesToArr($('#t_gallery').value).map(line=>{ const [src,...rest]=line.split('|'); return {src:src.trim(), cap:rest.join('|').trim()}; }).filter(g=>g.src);
+  t.videos = linesToArr($('#t_videos').value);
+  t.faq = linesToArr($('#t_faq').value).map(line=>{ const [q,...rest]=line.split('::'); return {q:q.trim(), a:rest.join('::').trim()}; }).filter(f=>f.q&&f.a);
+  return t;
+}
+function saveTrip(){
+  const t = collectTrip();
+  if(!t.id || !t.title) return alert('Trip ID and title required');
+  const idx = state.data.SEED_TRIPS.findIndex(x=>x.id===state.currentTrip);
+  if(idx>=0) state.data.SEED_TRIPS[idx]=t; else state.data.SEED_TRIPS.push(t);
+  state.currentTrip = t.id;
+  renderTrips(); openTrip(t.id);
+  showStatus($('#status'), 'Trip saved in editor. Go to Publish to commit data.js.', 'ok');
+}
+
+function renderSite(){
+  const s=state.data.SITE;
+  $('#siteName').value=s.name||''; $('#siteTagline').value=s.tagline||''; $('#siteEmail').value=s.email||'';
+  $('#siteAddress').value=s.address||''; $('#siteMap').value=s.map||'';
+  $('#sitePhones').value=(s.phones||[]).map(p=>`${p.label}|${p.tel}|${p.wa}`).join('\n');
+  $('#siteSocial').value=(s.social||[]).map(p=>`${p.name}|${p.url}`).join('\n');
+}
+$('#saveSite').onclick=()=>{
+  const s=state.data.SITE;
+  s.name=$('#siteName').value.trim(); s.tagline=$('#siteTagline').value.trim(); s.email=$('#siteEmail').value.trim();
+  s.address=$('#siteAddress').value.trim(); s.map=$('#siteMap').value.trim();
+  s.phones=linesToArr($('#sitePhones').value).map(l=>{const [label,tel,wa]=l.split('|').map(x=>x.trim()); return {label,tel,wa};}).filter(x=>x.label);
+  s.social=linesToArr($('#siteSocial').value).map(l=>{const [name,url]=l.split('|').map(x=>x.trim()); return {name,url};}).filter(x=>x.name);
+  showStatus($('#status'),'Site details saved in editor. Publish to commit.','ok');
+};
+
+function renderHome(){
+  $('#heroSlides').value=(state.data.HERO_SLIDES||[]).join('\n');
+  $('#places').value=(state.data.PLACES||[]).join('\n');
+  $('#legalPrivacy').value=state.data.LEGAL?.['Privacy Policy']||'';
+  $('#legalTerms').value=state.data.LEGAL?.['Terms of Service']||'';
+}
+$('#saveHome').onclick=()=>{
+  state.data.HERO_SLIDES=linesToArr($('#heroSlides').value);
+  state.data.PLACES=linesToArr($('#places').value);
+  state.data.LEGAL=state.data.LEGAL||{};
+  state.data.LEGAL['Privacy Policy']=$('#legalPrivacy').value;
+  state.data.LEGAL['Terms of Service']=$('#legalTerms').value;
+  showStatus($('#status'),'Home/content saved in editor. Publish to commit.','ok');
+};
+
+function simpleListEditor(containerId, items, fields, onChange){
+  const c=$('#'+containerId);
+  function render(){ c.innerHTML = items.map((it,i)=>`<div class="card" style="padding:.75rem;margin-bottom:.6rem"><div class="row" style="justify-content:space-between"><b>Item ${i+1}</b><button class="btn btn-danger" data-i="${i}">Remove</button></div>${fields.map(f=>`<label>${f.label}</label>${f.type==='textarea'?`<textarea data-f="${f.key}" data-i="${i}">${esc(it[f.key]||'')}</textarea>`:`<input data-f="${f.key}" data-i="${i}" value="${esc(it[f.key]||'')}">`}`).join('')}</div>`).join('') || '<div class="muted small">No items.</div>'; }
+  c.oninput=e=>{ const i=+e.target.dataset.i, f=e.target.dataset.f; if(Number.isFinite(i)&&f){ items[i][f]=e.target.value; onChange&&onChange(); } };
+  c.onclick=e=>{ const b=e.target.closest('[data-i]'); if(b && b.classList.contains('btn-danger')){ items.splice(+b.dataset.i,1); render(); onChange&&onChange(); } };
+  render(); return render;
+}
+
+let renderServicesRef, renderWaysRef, renderWorldRef, renderFaqRef, renderGuidesRef, renderNewsRef;
+function renderServices(){ renderServicesRef=simpleListEditor('servicesEditor', state.data.SERVICES, [{key:'t',label:'Title'},{key:'d',label:'Description',type:'textarea'},{key:'cta',label:'CTA'}]); }
+function renderWays(){ renderWaysRef=simpleListEditor('waysEditor', state.data.WAYS, [{key:'t',label:'Title'},{key:'d',label:'Description',type:'textarea'},{key:'filter',label:'Filter'}]); }
+function renderWorld(){ renderWorldRef=simpleListEditor('worldEditor', state.data.WORLD, [{key:'t',label:'Title'},{key:'img',label:'Image filename'},{key:'d',label:'Description',type:'textarea'}]); }
+function renderFaq(){ renderFaqRef=simpleListEditor('faqEditor', state.data.FAQ, [{key:'q',label:'Question'},{key:'a',label:'Answer',type:'textarea'}]); }
+function renderGuides(){ renderGuidesRef=simpleListEditor('guidesEditor', state.data.GUIDES, [{key:'id',label:'ID'},{key:'title',label:'Title'},{key:'date',label:'Date'},{key:'read',label:'Read time'},{key:'img',label:'Image'},{key:'place',label:'Place'},{key:'excerpt',label:'Excerpt',type:'textarea'}]); }
+function renderNews(){ renderNewsRef=simpleListEditor('newsEditor', state.data.TRIP_NEWS, [{key:'trip',label:'Trip ID'},{key:'kicker',label:'Kicker'},{key:'headline',label:'Headline'},{key:'note',label:'Note',type:'textarea'}]); }
+$('#addService').onclick=()=>{state.data.SERVICES.push({t:'',d:'',cta:''}); renderServices();};
+$('#addWay').onclick=()=>{state.data.WAYS.push({t:'',d:'',filter:''}); renderWays();};
+$('#addWorld').onclick=()=>{state.data.WORLD.push({t:'',img:'',d:''}); renderWorld();};
+$('#addFaq').onclick=()=>{state.data.FAQ.push({q:'',a:''}); renderFaq();};
+$('#addGuide').onclick=()=>{state.data.GUIDES.push({id:'',title:'',date:'',read:'',img:'',place:'',excerpt:'',body:[]}); renderGuides();};
+$('#addNews').onclick=()=>{state.data.TRIP_NEWS.push({trip:'',kicker:'',headline:'',note:''}); renderNews();};
+$('#saveServices').onclick=()=>showStatus($('#status'),'Services saved in editor.','ok');
+$('#saveWays').onclick=()=>showStatus($('#status'),'Ways saved in editor.','ok');
+$('#saveWorld').onclick=()=>showStatus($('#status'),'Destinations saved in editor.','ok');
+$('#saveFaq').onclick=()=>showStatus($('#status'),'FAQ saved in editor.','ok');
+$('#saveGuides').onclick=()=>showStatus($('#status'),'Guides saved in editor. Body arrays preserved; edit in data.js preview if needed.','ok');
+$('#saveNews').onclick=()=>showStatus($('#status'),'News saved in editor.','ok');
+
+function renderTeam(){
+  const t = state.data.TEAM;
+  const depts = (t.depts||[]).map((d,di)=>`<details open style="margin:.6rem 0"><summary>${esc(d.name||'Department '+(di+1))}</summary>
+    <label>Name</label><input data-team-dept="${di}" data-k="name" value="${esc(d.name||'')}">
+    <label>Head name</label><input data-team-dept="${di}" data-k="head.name" value="${esc(d.head?.name||'')}">
+    <label>Head title</label><input data-team-dept="${di}" data-k="head.title" value="${esc(d.head?.title||'')}">
+    <label>Head photo</label><input data-team-dept="${di}" data-k="head.photo" value="${esc(d.head?.photo||'')}">
+    <label>Head bio</label><textarea data-team-dept="${di}" data-k="head.bio">${esc(d.head?.bio||'')}</textarea>
+    <label>Members (one per line: name | title | photo | bio)</label><textarea data-team-dept="${di}" data-k="members">${esc((d.members||[]).map(m=>`${m.name||''} | ${m.title||''} | ${m.photo||''} | ${m.bio||''}`).join('\n'))}</textarea>
+  </details>`).join('');
+  $('#teamEditor').innerHTML = `
+    <div class="grid grid-2">
+      <div class="card"><h3>Lead</h3><label>Name</label><input id="teamLeadName" value="${esc(t.lead?.name||'')}"><label>Title</label><input id="teamLeadTitle" value="${esc(t.lead?.title||'')}"><label>Photo</label><input id="teamLeadPhoto" value="${esc(t.lead?.photo||'')}"><label>Bio</label><textarea id="teamLeadBio">${esc(t.lead?.bio||'')}</textarea></div>
+      <div class="card"><h3>Deputy</h3><label>Name</label><input id="teamDepName" value="${esc(t.deputy?.name||'')}"><label>Title</label><input id="teamDepTitle" value="${esc(t.deputy?.title||'')}"><label>Photo</label><input id="teamDepPhoto" value="${esc(t.deputy?.photo||'')}"><label>Bio</label><textarea id="teamDepBio">${esc(t.deputy?.bio||'')}</textarea></div>
+    </div>
+    <h3 style="margin-top:1rem">Departments</h3>${depts}
+  `;
+  $('#teamEditor').oninput = e=>{
+    const di=e.target.dataset.teamDept; if(di===undefined) return;
+    const k=e.target.dataset.k; const d=state.data.TEAM.depts[+di];
+    if(k==='name') d.name=e.target.value;
+    else if(k==='head.name'){ d.head=d.head||{}; d.head.name=e.target.value; }
+    else if(k==='head.title'){ d.head=d.head||{}; d.head.title=e.target.value; }
+    else if(k==='head.photo'){ d.head=d.head||{}; d.head.photo=e.target.value; }
+    else if(k==='head.bio'){ d.head=d.head||{}; d.head.bio=e.target.value; }
+    else if(k==='members'){ d.members=linesToArr(e.target.value).map(l=>{const [name,title,photo,...bio]=l.split('|').map(x=>x.trim()); return {name,title,photo,bio:bio.join('|').trim()};}); }
+  };
+}
+$('#saveTeam').onclick=()=>{
+  const t=state.data.TEAM; t.lead=t.lead||{}; t.deputy=t.deputy||{};
+  t.lead.name=$('#teamLeadName').value.trim(); t.lead.title=$('#teamLeadTitle').value.trim(); t.lead.photo=$('#teamLeadPhoto').value.trim(); t.lead.bio=$('#teamLeadBio').value.trim();
+  t.deputy.name=$('#teamDepName').value.trim(); t.deputy.title=$('#teamDepTitle').value.trim(); t.deputy.photo=$('#teamDepPhoto').value.trim(); t.deputy.bio=$('#teamDepBio').value.trim();
+  showStatus($('#status'),'Team saved in editor.','ok');
+};
+
+let renderReviewsRef;
+function renderMore(){
+  $('#storyText').value=(state.data.STORY||[]).join('\n\n');
+  $('#statsText').value=(state.data.STATS||[]).map(s=>`${s.n} | ${s.suf||''} | ${s.l||''}`).join('\n');
+  $('#publishedJson').value=JSON.stringify(state.data.PUBLISHED||{trips:[],dates:{},reviews:[]}, null, 2);
+  renderReviewsRef=simpleListEditor('reviewsEditor', state.data.REVIEWS, [{key:'name',label:'Name'},{key:'from',label:'From'},{key:'trip',label:'Trip ID'},{key:'rating',label:'Rating (1-5)'},{key:'date',label:'Date'},{key:'text',label:'Text',type:'textarea'}]);
+}
+$('#saveStory').onclick=()=>{ state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); showStatus($('#status'),'Story saved.','ok'); };
+$('#saveStats').onclick=()=>{ state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); showStatus($('#status'),'Stats saved.','ok'); };
+$('#addReview').onclick=()=>{ state.data.REVIEWS.push({name:'',from:'',trip:'',rating:5,text:'',date:''}); renderMore(); };
+$('#saveReviews').onclick=()=>{ state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); showStatus($('#status'),'Reviews saved.','ok'); };
+$('#savePublished').onclick=()=>{ try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); showStatus($('#status'),'Published JSON saved.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
+
+async function renderMedia(){
+  const box=$('#mediaList'); box.innerHTML='<div class="muted">Loading media...</div>';
+  try{
+    const items=await apiJson(`/repos/${state.owner}/${state.repo}/contents?ref=${encodeURIComponent(state.branch)}`);
+    state.media = items.filter(i=>i.type==='file' && /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i.test(i.name));
+    const q=($('#mediaSearch').value||'').toLowerCase();
+    const list=state.media.filter(m=>!q || m.name.toLowerCase().includes(q));
+    box.innerHTML = list.map(m=>{
+      const isVid=/\.(mp4|webm|mov)$/i.test(m.name);
+      const src=`https://raw.githubusercontent.com/${state.owner}/${state.repo}/${state.branch}/${encodeURIComponent(m.name)}`;
+      return `<div class="media-card">${isVid?`<video src="${src}" muted></video>`:`<img src="${src}" alt="">`}<div class="p"><div class="n">${esc(m.name)}</div><div class="row" style="margin-top:.4rem"><a class="btn small" href="${src}" target="_blank" rel="noopener">Open</a><button class="btn btn-danger small" data-del-media="${esc(m.name)}" data-sha="${esc(m.sha)}">Delete</button></div></div></div>`;
+    }).join('') || '<div class="muted">No media files found.</div>';
+    box.onclick = async e=>{
+      const b=e.target.closest('[data-del-media]'); if(!b) return;
+      const name=b.dataset.delMedia, sha=b.dataset.sha;
+      if(!confirm(`Delete ${name} from the main repo? This commits immediately.`)) return;
+      try{
+        await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(name)}`, {method:'DELETE', body:JSON.stringify({message:`Delete media ${name} via admin`, sha, branch:state.branch})});
+        showStatus($('#status'), `Deleted ${name}.`, 'ok'); renderMedia();
+      }catch(err){ showStatus($('#status'), err.message, 'err'); }
+    };
+  }catch(e){ box.innerHTML=`<div class="status err">${esc(e.message)}</div>`; }
+}
+
+$('#refreshMedia').onclick=renderMedia;
+$('#mediaSearch').oninput=renderMedia;
+$('#uploadMedia').onclick=async ()=>{
+  const files = Array.from($('#mediaFiles').files||[]);
+  if(!files.length) return alert('Select files first');
+  showStatus($('#status'), `Uploading ${files.length} file(s)...`, '');
+  for(const f of files){
+    try{
+      const buf = await f.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]);
+      const content = btoa(bin);
+      // check if exists to get sha
+      let sha; try{ const ex=await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f.name)}?ref=${encodeURIComponent(state.branch)}`); sha=ex.sha; }catch{}
+      await apiJson(`/repos/${state.owner}/${state.repo}/contents/${encodeURIComponent(f.name)}`, {method:'PUT', body:JSON.stringify({message:`Upload ${f.name} via admin`, content, branch:state.branch, ...(sha?{sha}:{})})});
+      showStatus($('#status'), `Uploaded ${f.name}`, 'ok');
+    }catch(err){ showStatus($('#status'), `Failed ${f.name}: ${err.message}`, 'err'); }
+  }
+  $('#mediaFiles').value='';
+  renderMedia();
+};
+
+async function publish(){
+  const msg = $('#commitMsg').value.trim() || 'Update site content via admin';
+  const ps=$('#publishStatus');
+  try{
+    showStatus(ps,'Preparing data.js...','');
+    const latest = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+    state.sha = latest.sha;
+    const content = b64EncodeUtf8(serializeDataJs(state.data));
+    await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js`, {method:'PUT', body:JSON.stringify({message:msg, content, sha:state.sha, branch:state.branch})});
+    const after = await apiJson(`/repos/${state.owner}/${state.repo}/contents/data.js?ref=${encodeURIComponent(state.branch)}`);
+    state.sha = after.sha;
+    showStatus(ps,'Published successfully to main website repo.','ok');
+    showStatus($('#status'),'Published data.js to GitHub.','ok');
+  }catch(e){ showStatus(ps, e.message, 'err'); }
+}
+
+$('#publishBtn').onclick=publish;
+$('#reloadBtn').onclick=async ()=>{ try{ await loadRepo(); showStatus($('#publishStatus'),'Reloaded from GitHub.','ok'); }catch(e){ showStatus($('#publishStatus'),e.message,'err'); } };
+$('#btnConnect').onclick=connect;
+$('#btnLogout').onclick=logout;
+$('#newTrip').onclick=()=>openTrip('new-trip-'+Date.now());
+
+(function boot(){
+  try{ const saved=JSON.parse(localStorage.getItem('scenes_admin')||'null'); if(saved){ $('#token').value=saved.token||''; $('#owner').value=saved.owner||'shema-k'; $('#repo').value=saved.repo||'scenes-tours'; $('#branch').value=saved.branch||'main'; $('#remember').checked=true; } }catch{}
+})();
+</script>
+</body>
+</html>
