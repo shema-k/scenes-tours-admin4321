@@ -427,6 +427,7 @@ function collectTrip(){
   return t;
 }
 function saveTrip(){
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   const t = collectTrip();
   if(!t.id || !t.title) return alert('Trip ID and title required');
   const idx = state.data.SEED_TRIPS.findIndex(x=>x.id===state.currentTrip);
@@ -444,6 +445,7 @@ function renderSite(){
   $('#siteSocial').value=(s.social||[]).map(p=>`${p.name}|${p.url}`).join('\n');
 }
 $('#saveSite').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   const s=state.data.SITE;
   s.name=$('#siteName').value.trim(); s.tagline=$('#siteTagline').value.trim(); s.email=$('#siteEmail').value.trim();
   s.address=$('#siteAddress').value.trim(); s.map=$('#siteMap').value.trim();
@@ -459,6 +461,7 @@ function renderHome(){
   $('#legalTerms').value=state.data.LEGAL?.['Terms of Service']||'';
 }
 $('#saveHome').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   state.data.HERO_SLIDES=linesToArr($('#heroSlides').value);
   state.data.PLACES=linesToArr($('#places').value);
   state.data.LEGAL=state.data.LEGAL||{};
@@ -488,12 +491,18 @@ $('#addWorld').onclick=()=>{state.data.WORLD.push({t:'',img:'',d:''}); renderWor
 $('#addFaq').onclick=()=>{state.data.FAQ.push({q:'',a:''}); renderFaq();};
 $('#addGuide').onclick=()=>{state.data.GUIDES.push({id:'',title:'',date:'',read:'',img:'',place:'',excerpt:'',body:[]}); renderGuides();};
 $('#addNews').onclick=()=>{state.data.TRIP_NEWS.push({trip:'',kicker:'',headline:'',note:''}); renderNews();};
-$('#saveServices').onclick=()=>markDirty('Services saved.'); showStatus($('#status'),'Services saved in draft. Publish to commit.','ok');
-$('#saveWays').onclick=()=>markDirty('Ways saved.'); showStatus($('#status'),'Ways saved in draft. Publish to commit.','ok');
-$('#saveWorld').onclick=()=>markDirty('Destinations saved.'); showStatus($('#status'),'Destinations saved in draft. Publish to commit.','ok');
-$('#saveFaq').onclick=()=>markDirty('FAQ saved.'); showStatus($('#status'),'FAQ saved in draft. Publish to commit.','ok');
-$('#saveGuides').onclick=()=>markDirty('Guides saved.'); showStatus($('#status'),'Guides saved in draft. Publish to commit.','ok');
-$('#saveNews').onclick=()=>markDirty('News saved.'); showStatus($('#status'),'News saved in draft. Publish to commit.','ok');
+$('#saveServices').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('Services saved.'); showStatus($('#status'),'Services saved in draft. Publish to commit.','ok');};
+$('#saveWays').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('Ways saved.'); showStatus($('#status'),'Ways saved in draft. Publish to commit.','ok');};
+$('#saveWorld').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('Destinations saved.'); showStatus($('#status'),'Destinations saved in draft. Publish to commit.','ok');};
+$('#saveFaq').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('FAQ saved.'); showStatus($('#status'),'FAQ saved in draft. Publish to commit.','ok');};
+$('#saveGuides').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('Guides saved.'); showStatus($('#status'),'Guides saved in draft. Publish to commit.','ok');};
+$('#saveNews').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }markDirty('News saved.'); showStatus($('#status'),'News saved in draft. Publish to commit.','ok');};
 
 function renderTeam(){
   const t = state.data.TEAM;
@@ -524,6 +533,7 @@ function renderTeam(){
   };
 }
 $('#saveTeam').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   const t=state.data.TEAM; t.lead=t.lead||{}; t.deputy=t.deputy||{};
   t.lead.name=$('#teamLeadName').value.trim(); t.lead.title=$('#teamLeadTitle').value.trim(); t.lead.photo=$('#teamLeadPhoto').value.trim(); t.lead.bio=$('#teamLeadBio').value.trim();
   t.deputy.name=$('#teamDepName').value.trim(); t.deputy.title=$('#teamDepTitle').value.trim(); t.deputy.photo=$('#teamDepPhoto').value.trim(); t.deputy.bio=$('#teamDepBio').value.trim();
@@ -537,11 +547,15 @@ function renderMore(){
   $('#publishedJson').value=JSON.stringify(state.data.PUBLISHED||{trips:[],dates:{},reviews:[]}, null, 2);
   renderReviewsRef=simpleListEditor('reviewsEditor', state.data.REVIEWS, [{key:'name',label:'Name'},{key:'from',label:'From'},{key:'trip',label:'Trip ID'},{key:'rating',label:'Rating (1-5)'},{key:'date',label:'Date'},{key:'text',label:'Text',type:'textarea'}]);
 }
-$('#saveStory').onclick=()=>{ state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); markDirty('Story saved.'); showStatus($('#status'),'Story saved in draft. Publish to commit.','ok'); };
-$('#saveStats').onclick=()=>{ state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); markDirty('Stats saved.'); showStatus($('#status'),'Stats saved in draft. Publish to commit.','ok'); };
+$('#saveStory').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); markDirty('Story saved.'); showStatus($('#status'),'Story saved in draft. Publish to commit.','ok'); };
+$('#saveStats').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); markDirty('Stats saved.'); showStatus($('#status'),'Stats saved in draft. Publish to commit.','ok'); };
 $('#addReview').onclick=()=>{ state.data.REVIEWS.push({name:'',from:'',trip:'',rating:5,text:'',date:''}); renderMore(); };
-$('#saveReviews').onclick=()=>{ state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); markDirty('Reviews saved.'); showStatus($('#status'),'Reviews saved in draft. Publish to commit.','ok'); };
-$('#savePublished').onclick=()=>{ try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); markDirty('Published JSON saved.'); showStatus($('#status'),'Published JSON saved in draft. Publish to commit.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
+$('#saveReviews').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); markDirty('Reviews saved.'); showStatus($('#status'),'Reviews saved in draft. Publish to commit.','ok'); };
+$('#savePublished').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); markDirty('Published JSON saved.'); showStatus($('#status'),'Published JSON saved in draft. Publish to commit.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
 
 async function renderMedia(){
   const box=$('#mediaList'); box.innerHTML='<div class="muted">Loading media...</div>';
@@ -612,6 +626,8 @@ $('#btnConnect').onclick=connect;
 $('#btnLogout').onclick=logout;
 $('#newTrip').onclick=()=>openTrip('new-trip-'+Date.now());
 
+window.addEventListener('error', e=>{ try{ showStatus($('#status'), 'Error: '+(e.message||e.error||'Unknown error'), 'err'); }catch{} });
+window.addEventListener('unhandledrejection', e=>{ try{ showStatus($('#status'), 'Error: '+(e.reason?.message||e.reason||'Unknown error'), 'err'); }catch{} });
 (function boot(){
   try{ const saved=JSON.parse(localStorage.getItem('scenes_admin')||'null'); if(saved){ $('#token').value=saved.token||''; $('#owner').value=saved.owner||'shema-k'; $('#repo').value=saved.repo||'scenes-tours'; $('#branch').value=saved.branch||'main'; $('#remember').checked=true; } }catch{}
 })();
