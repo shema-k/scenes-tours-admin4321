@@ -77,7 +77,10 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
       <div><label>Owner</label><input id="owner" value="shema-k"></div>
       <div><label>Main website repo</label><input id="repo" value="scenes-tours"></div>
       <div><label>Branch</label><input id="branch" value="main"></div>
+      <div><label>Netlify Site ID (for review submissions)</label><input id="netlifySiteId" placeholder="e.g. 1234abcd-..." autocomplete="off"></div>
+      <div><label>Netlify Access Token (optional)</label><input id="netlifyToken" type="password" autocomplete="off" placeholder="nfp_..."></div>
     </div>
+    <p class="muted small" style="margin-top:.5rem">Netlify fields are optional but needed to load review submissions from Netlify Forms into the Reviews tab.</p>
     <label class="row" style="margin-top:.7rem"><input id="remember" type="checkbox" style="width:auto"> Remember token on this device (use only on a private device)</label>
     <div class="row" style="margin-top:.8rem"><button id="btnConnect" class="btn btn-primary">Connect</button></div>
     <div id="authStatus" class="status hidden"></div>
@@ -210,6 +213,10 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
           <label>Paste WhatsApp/email review message</label>
           <textarea id="reviewInboxPaste" style="min-height:180px" placeholder="*REVIEW FOR PUBLISHING*&#10;&#10;Name: ...&#10;From: ...&#10;Trip: ...&#10;Rating: 5/5&#10;Review: ..."></textarea>
           <div class="row"><button class="btn btn-primary" id="parseReviewBtn">Parse &amp; add to reviews draft</button><button class="btn btn-ghost" id="clearReviewPaste">Clear</button></div>
+          <hr style="border:0;border-top:1px solid var(--line);margin:.5rem 0">
+          <div class="row" style="justify-content:space-between;align-items:center"><b class="small">Netlify Form submissions</b><button class="btn small" id="loadNetlifyReviews">Load submissions</button></div>
+          <p class="muted small">Loads submissions from Netlify form <span class="kbd">review-submissions</span> using the Netlify Site ID/token from Connect settings.</p>
+          <div id="netlifyReviewsList" class="stack"></div>
           <div id="reviewInboxStatus" class="status hidden"></div>
         </div>
         <div class="card stack">
@@ -257,7 +264,7 @@ const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 const uid = () => 'id-' + Math.random().toString(36).slice(2,10);
-const state = { token:'', owner:'shema-k', repo:'scenes-tours', branch:'main', data:null, sha:null, media:[], currentTrip:null };
+const state = { token:'', owner:'shema-k', repo:'scenes-tours', branch:'main', netlifySiteId:'', netlifyToken:'', data:null, sha:null, media:[], currentTrip:null };
 
 const TABS = [
   ['trips','Trips'],
@@ -437,6 +444,8 @@ async function connect() {
   state.owner = $('#owner').value.trim();
   state.repo = $('#repo').value.trim();
   state.branch = $('#branch').value.trim() || 'main';
+  state.netlifySiteId = ($('#netlifySiteId')?.value||'').trim();
+  state.netlifyToken = ($('#netlifyToken')?.value||'').trim();
   if(!state.token) return showStatus($('#authStatus'), 'Token required.', 'err');
   try {
     showStatus($('#authStatus'), 'Connecting...', '');
@@ -446,7 +455,7 @@ async function connect() {
     $('#authView').classList.add('hidden');
     $('#appView').classList.remove('hidden');
     $('#btnLogout').classList.remove('hidden');
-    if($('#remember').checked) localStorage.setItem('scenes_admin', JSON.stringify({token:state.token,owner:state.owner,repo:state.repo,branch:state.branch}));
+    if($('#remember').checked) localStorage.setItem('scenes_admin', JSON.stringify({token:state.token,owner:state.owner,repo:state.repo,branch:state.branch,netlifySiteId:state.netlifySiteId,netlifyToken:state.netlifyToken}));
     else localStorage.removeItem('scenes_admin');
     initTabs();
   } catch(e) { showStatus($('#authStatus'), e.message, 'err'); }
@@ -730,6 +739,36 @@ $('#parseReviewBtn').onclick=()=>{
   $('#reviewInboxPaste').value='';
 };
 $('#clearReviewPaste').onclick=()=>{ $('#reviewInboxPaste').value=''; hideStatus($('#reviewInboxStatus')); };
+
+async function loadNetlifyReviewSubmissions(){
+  const siteId = (state.netlifySiteId || $('#netlifySiteId')?.value || '').trim();
+  const token = (state.netlifyToken || $('#netlifyToken')?.value || '').trim();
+  const box = $('#netlifyReviewsList');
+  if(!siteId || !token){ box.innerHTML='<div class="muted small">Add Netlify Site ID and Netlify Access Token in Connect settings, then reconnect or save settings.</div>'; return; }
+  box.innerHTML='<div class="muted small">Loading submissions...</div>';
+  try{
+    const res = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(siteId)}/submissions?per_page=100`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const txt = await res.text();
+    let data; try{ data=JSON.parse(txt); }catch{ data=null; }
+    if(!res.ok) throw new Error((data && (data.message||data.error)) || txt || res.statusText);
+    const subs = (Array.isArray(data)?data:[]).filter(s=>s.form_name==='review-submissions');
+    if(!subs.length){ box.innerHTML='<div class="muted small">No review-submissions found.</div>'; return; }
+    box.innerHTML = subs.map((s,i)=>{
+      const d=s.data||{};
+      const r={name:d.name||'', from:d.from||'', trip:d.trip_id||d.trip||'', rating:Number(d.rating)||5, date:(d.submitted_at||s.created_at||'').slice(0,10), text:d.text||d.review||''};
+      return `<div class="card" style="padding:.7rem"><div class="small muted">${esc(r.date||'')} · ${esc(s.email||'submission')}</div><b>${esc(r.name||'Anonymous')}</b> <span class="pill small">${esc(String(r.rating))}/5</span><div class="small muted" style="margin:.25rem 0">${esc(r.trip||'')}</div><div class="small" style="white-space:pre-wrap">${esc(r.text||'')}</div><div class="row" style="margin-top:.5rem"><button class="btn small btn-primary" data-netlify-review='${esc(JSON.stringify(r))}'>Add to reviews draft</button></div></div>`;
+    }).join('');
+    box.querySelectorAll('[data-netlify-review]').forEach(btn=>btn.onclick=()=>{
+      if(!state.data){ showStatus($('#reviewInboxStatus'),'Connect and load the main repo first.','err'); return; }
+      const r=JSON.parse(btn.getAttribute('data-netlify-review'));
+      state.data.REVIEWS.push(r); renderReviews(); markDirty('Review added from Netlify submission.');
+      showStatus($('#reviewInboxStatus'),'Review added to draft. Save reviews and Publish to show it on the website.','ok');
+    });
+  }catch(e){ box.innerHTML=`<div class="status err">${esc(e.message)}</div>`; }
+}
+$('#loadNetlifyReviews').onclick=loadNetlifyReviewSubmissions;
 $('#savePublished').onclick=()=>{
   if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } try{ state.data.PUBLISHED=JSON.parse($('#publishedJson').value); markDirty('Published JSON saved.'); showStatus($('#status'),'Published JSON saved in draft. Publish to commit.','ok'); }catch(e){ alert('Invalid JSON: '+e.message); } };
 
@@ -917,7 +956,7 @@ $('#newTrip').onclick=()=>openTrip('new-trip-'+Date.now());
 window.addEventListener('error', e=>{ try{ showStatus($('#status'), 'Error: '+(e.message||e.error||'Unknown error'), 'err'); }catch{} });
 window.addEventListener('unhandledrejection', e=>{ try{ showStatus($('#status'), 'Error: '+(e.reason?.message||e.reason||'Unknown error'), 'err'); }catch{} });
 (function boot(){
-  try{ const saved=JSON.parse(localStorage.getItem('scenes_admin')||'null'); if(saved){ $('#token').value=saved.token||''; $('#owner').value=saved.owner||'shema-k'; $('#repo').value=saved.repo||'scenes-tours'; $('#branch').value=saved.branch||'main'; $('#remember').checked=true; } }catch{}
+  try{ const saved=JSON.parse(localStorage.getItem('scenes_admin')||'null'); if(saved){ $('#token').value=saved.token||''; $('#owner').value=saved.owner||'shema-k'; $('#repo').value=saved.repo||'scenes-tours'; $('#branch').value=saved.branch||'main'; $('#netlifySiteId').value=saved.netlifySiteId||''; $('#netlifyToken').value=saved.netlifyToken||''; $('#remember').checked=true; } }catch{}
 })();
 </script>
 </body>
