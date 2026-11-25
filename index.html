@@ -115,42 +115,64 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
     </section>
 
     <section id="tab-site" class="tabview hidden">
-      <div class="grid grid-2">
-        <div class="card stack">
-          <h2>Site details</h2>
+      <div class="card stack">
+        <h2>Site details</h2>
+        <p class="muted small">Core company/site information used across the main website.</p>
+        <div class="grid grid-2">
           <div><label>Site name</label><input id="siteName"></div>
           <div><label>Tagline</label><input id="siteTagline"></div>
           <div><label>Email</label><input id="siteEmail"></div>
-          <div><label>Address</label><textarea id="siteAddress"></textarea></div>
           <div><label>Map embed URL</label><input id="siteMap"></div>
+        </div>
+        <div><label>Address</label><textarea id="siteAddress"></textarea></div>
+        <div class="grid grid-2">
           <div><label>Phones (one per line: label|tel|wa)</label><textarea id="sitePhones"></textarea></div>
           <div><label>Social (one per line: name|url)</label><textarea id="siteSocial"></textarea></div>
-          <button class="btn btn-primary" id="saveSite">Save site details</button>
         </div>
-        <div class="card stack">
-          <h2>Home & content</h2>
-          <div><label>Hero slides (one image filename per line)</label><textarea id="heroSlides"></textarea></div>
-          <div><label>Places (one per line)</label><textarea id="places"></textarea></div>
-          <div><label>Legal: Privacy Policy (HTML allowed)</label><textarea id="legalPrivacy"></textarea></div>
-          <div><label>Legal: Terms of Service (HTML allowed)</label><textarea id="legalTerms"></textarea></div>
-          <button class="btn btn-primary" id="saveHome">Save home/content</button>
-        </div>
+        <button class="btn btn-primary" id="saveSite">Save site details</button>
       </div>
     </section>
 
-    <section id="tab-content" class="tabview hidden">
-      <div class="grid grid-2">
-        <div class="card stack"><h2>Services</h2><div id="servicesEditor"></div><button class="btn" id="addService">Add service</button><button class="btn btn-primary" id="saveServices">Save services</button></div>
-        <div class="card stack"><h2>Ways / quick categories</h2><div id="waysEditor"></div><button class="btn" id="addWay">Add way</button><button class="btn btn-primary" id="saveWays">Save ways</button></div>
+    <section id="tab-hero" class="tabview hidden">
+      <div class="card stack">
+        <h2>Hero slides</h2>
+        <p class="muted small">Homepage hero slide image filenames (one per line). Upload files in Media first.</p>
+        <label>Hero slides (one image filename per line)</label><textarea id="heroSlides" style="min-height:180px"></textarea>
+        <button class="btn btn-primary" id="saveHeroSlides">Save hero slides</button>
       </div>
-      <div class="grid grid-2" style="margin-top:1rem">
-        <div class="card stack"><h2>Destinations (WORLD)</h2><div id="worldEditor"></div><button class="btn" id="addWorld">Add destination</button><button class="btn btn-primary" id="saveWorld">Save destinations</button></div>
-        <div class="card stack"><h2>FAQ</h2><div id="faqEditor"></div><button class="btn" id="addFaq">Add FAQ</button><button class="btn btn-primary" id="saveFaq">Save FAQ</button></div>
+    </section>
+
+    <section id="tab-places" class="tabview hidden">
+      <div class="card stack">
+        <h2>Places</h2>
+        <p class="muted small">Places shown on the website (one per line).</p>
+        <label>Places (one per line)</label><textarea id="places" style="min-height:220px"></textarea>
+        <button class="btn btn-primary" id="savePlaces">Save places</button>
       </div>
-      <div class="grid grid-2" style="margin-top:1rem">
-        <div class="card stack"><h2>Journal / Guides</h2><div id="guidesEditor"></div><button class="btn" id="addGuide">Add guide</button><button class="btn btn-primary" id="saveGuides">Save guides</button></div>
-        <div class="card stack"><h2>Trip News / Journal cards</h2><div id="newsEditor"></div><button class="btn" id="addNews">Add news card</button><button class="btn btn-primary" id="saveNews">Save news</button></div>
-      </div>
+    </section>
+
+    <section id="tab-services" class="tabview hidden">
+      <div class="card stack"><h2>Services</h2><p class="muted small">Service cards shown on the main website.</p><div id="servicesEditor"></div><button class="btn" id="addService">Add service</button><button class="btn btn-primary" id="saveServices">Save services</button></div>
+    </section>
+
+    <section id="tab-ways" class="tabview hidden">
+      <div class="card stack"><h2>Ways / quick categories</h2><p class="muted small">Category/way cards used for quick trip discovery.</p><div id="waysEditor"></div><button class="btn" id="addWay">Add way</button><button class="btn btn-primary" id="saveWays">Save ways</button></div>
+    </section>
+
+    <section id="tab-destinations" class="tabview hidden">
+      <div class="card stack"><h2>Destinations (WORLD)</h2><p class="muted small">Destination cards shown in the destinations section.</p><div id="worldEditor"></div><button class="btn" id="addWorld">Add destination</button><button class="btn btn-primary" id="saveWorld">Save destinations</button></div>
+    </section>
+
+    <section id="tab-guides" class="tabview hidden">
+      <div class="card stack"><h2>Journal / Guides</h2><p class="muted small">Travel guides and journal articles.</p><div id="guidesEditor"></div><button class="btn" id="addGuide">Add guide</button><button class="btn btn-primary" id="saveGuides">Save guides</button></div>
+    </section>
+
+    <section id="tab-news" class="tabview hidden">
+      <div class="card stack"><h2>Trip News / Journal cards</h2><p class="muted small">News/journal cards linked to trips.</p><div id="newsEditor"></div><button class="btn" id="addNews">Add news card</button><button class="btn btn-primary" id="saveNews">Save news</button></div>
+    </section>
+
+    <section id="tab-faq" class="tabview hidden">
+      <div class="card stack"><h2>FAQ</h2><p class="muted small">Frequently asked questions shown on the website.</p><div id="faqEditor"></div><button class="btn" id="addFaq">Add FAQ</button><button class="btn btn-primary" id="saveFaq">Save FAQ</button></div>
     </section>
 
     <section id="tab-team" class="tabview hidden">
@@ -162,14 +184,44 @@ hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
       </div>
     </section>
 
-    <section id="tab-more" class="tabview hidden">
-      <div class="grid grid-2">
-        <div class="card stack"><h2>Story paragraphs</h2><label>One paragraph per line break block (separate by blank line)</label><textarea id="storyText" style="min-height:180px"></textarea><button class="btn btn-primary" id="saveStory">Save story</button></div>
-        <div class="card stack"><h2>Stats</h2><label>One per line: number | suffix | label</label><textarea id="statsText"></textarea><button class="btn btn-primary" id="saveStats">Save stats</button></div>
+    <section id="tab-story" class="tabview hidden">
+      <div class="card stack">
+        <h2>Story paragraphs</h2>
+        <p class="muted small">About/story paragraphs. Separate paragraphs by a blank line.</p>
+        <textarea id="storyText" style="min-height:220px"></textarea>
+        <button class="btn btn-primary" id="saveStory">Save story</button>
       </div>
-      <div class="grid grid-2" style="margin-top:1rem">
-        <div class="card stack"><h2>Reviews (REVIEWS)</h2><div id="reviewsEditor"></div><button class="btn" id="addReview">Add review</button><button class="btn btn-primary" id="saveReviews">Save reviews</button></div>
-        <div class="card stack"><h2>Published (PUBLISHED JSON)</h2><p class="muted small">Advanced: trips/dates/reviews published directly. Edit as JSON.</p><textarea id="publishedJson" style="min-height:220px;font-family:ui-monospace,monospace;font-size:12px"></textarea><button class="btn btn-primary" id="savePublished">Save published</button></div>
+    </section>
+
+    <section id="tab-stats" class="tabview hidden">
+      <div class="card stack">
+        <h2>Stats</h2>
+        <p class="muted small">One per line: <span class="kbd">number | suffix | label</span> (suffix optional).</p>
+        <textarea id="statsText" style="min-height:180px"></textarea>
+        <button class="btn btn-primary" id="saveStats">Save stats</button>
+      </div>
+    </section>
+
+    <section id="tab-reviews" class="tabview hidden">
+      <div class="card stack"><h2>Reviews (REVIEWS)</h2><p class="muted small">Customer reviews/testimonials.</p><div id="reviewsEditor"></div><button class="btn" id="addReview">Add review</button><button class="btn btn-primary" id="saveReviews">Save reviews</button></div>
+    </section>
+
+    <section id="tab-legal" class="tabview hidden">
+      <div class="card stack">
+        <h2>Legal</h2>
+        <p class="muted small">Legal pages content (HTML allowed).</p>
+        <div><label>Privacy Policy (HTML allowed)</label><textarea id="legalPrivacy" style="min-height:180px"></textarea></div>
+        <div><label>Terms of Service (HTML allowed)</label><textarea id="legalTerms" style="min-height:180px"></textarea></div>
+        <button class="btn btn-primary" id="saveLegal">Save legal</button>
+      </div>
+    </section>
+
+    <section id="tab-published" class="tabview hidden">
+      <div class="card stack">
+        <h2>Published (PUBLISHED JSON)</h2>
+        <p class="muted small">Advanced: trips/dates/reviews published directly. Edit as JSON.</p>
+        <textarea id="publishedJson" style="min-height:260px;font-family:ui-monospace,monospace;font-size:12px"></textarea>
+        <button class="btn btn-primary" id="savePublished">Save published</button>
       </div>
     </section>
 
@@ -193,7 +245,24 @@ const uid = () => 'id-' + Math.random().toString(36).slice(2,10);
 const state = { token:'', owner:'shema-k', repo:'scenes-tours', branch:'main', data:null, sha:null, media:[], currentTrip:null };
 
 const TABS = [
-  ['trips','Trips'],['media','Media'],['site','Site & Home'],['content','Content'],['team','Team'],['more','More'],['publish','Publish']
+  ['trips','Trips'],
+  ['media','Media'],
+  ['site','Site details'],
+  ['hero','Hero slides'],
+  ['places','Places'],
+  ['services','Services'],
+  ['ways','Ways'],
+  ['destinations','Destinations'],
+  ['guides','Guides'],
+  ['news','Trip news'],
+  ['faq','FAQ'],
+  ['team','Team'],
+  ['story','Story'],
+  ['stats','Stats'],
+  ['reviews','Reviews'],
+  ['legal','Legal'],
+  ['published','Published'],
+  ['publish','Publish']
 ];
 
 let dirty=false;
@@ -370,7 +439,7 @@ async function connect() {
 
 function logout(){ localStorage.removeItem('scenes_admin'); location.reload(); }
 
-function renderAll(){ renderTrips(); renderSite(); renderHome(); renderServices(); renderWays(); renderWorld(); renderFaq(); renderGuides(); renderNews(); renderTeam(); renderMore(); }
+function renderAll(){ renderTrips(); renderSite(); renderHeroSlides(); renderPlaces(); renderServices(); renderWays(); renderWorld(); renderFaq(); renderGuides(); renderNews(); renderTeam(); renderStory(); renderStats(); renderReviews(); renderLegal(); renderPublished(); }
 
 function tripById(id){ return state.data.SEED_TRIPS.find(t=>t.id===id); }
 function renderTrips(){
@@ -486,20 +555,28 @@ $('#saveSite').onclick=()=>{
   markDirty('Site details saved.'); showStatus($('#status'),'Site details saved in draft. Publish to commit.','ok');
 };
 
-function renderHome(){
-  $('#heroSlides').value=(state.data.HERO_SLIDES||[]).join('\n');
-  $('#places').value=(state.data.PLACES||[]).join('\n');
+function renderHeroSlides(){ $('#heroSlides').value=(state.data.HERO_SLIDES||[]).join('\n'); }
+function renderPlaces(){ $('#places').value=(state.data.PLACES||[]).join('\n'); }
+function renderLegal(){
   $('#legalPrivacy').value=state.data.LEGAL?.['Privacy Policy']||'';
   $('#legalTerms').value=state.data.LEGAL?.['Terms of Service']||'';
 }
-$('#saveHome').onclick=()=>{
+$('#saveHeroSlides').onclick=()=>{
   if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   state.data.HERO_SLIDES=linesToArr($('#heroSlides').value);
+  markDirty('Hero slides saved.'); showStatus($('#status'),'Hero slides saved in draft. Publish to commit.','ok');
+};
+$('#savePlaces').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   state.data.PLACES=linesToArr($('#places').value);
+  markDirty('Places saved.'); showStatus($('#status'),'Places saved in draft. Publish to commit.','ok');
+};
+$('#saveLegal').onclick=()=>{
+  if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; }
   state.data.LEGAL=state.data.LEGAL||{};
   state.data.LEGAL['Privacy Policy']=$('#legalPrivacy').value;
   state.data.LEGAL['Terms of Service']=$('#legalTerms').value;
-  markDirty('Home/content saved.'); showStatus($('#status'),'Home/content saved in draft. Publish to commit.','ok');
+  markDirty('Legal saved.'); showStatus($('#status'),'Legal saved in draft. Publish to commit.','ok');
 };
 
 function simpleListEditor(containerId, items, fields, onChange){
@@ -573,17 +650,15 @@ $('#saveTeam').onclick=()=>{
 };
 
 let renderReviewsRef;
-function renderMore(){
-  $('#storyText').value=(state.data.STORY||[]).join('\n\n');
-  $('#statsText').value=(state.data.STATS||[]).map(s=>`${s.n} | ${s.suf||''} | ${s.l||''}`).join('\n');
-  $('#publishedJson').value=JSON.stringify(state.data.PUBLISHED||{trips:[],dates:{},reviews:[]}, null, 2);
-  renderReviewsRef=simpleListEditor('reviewsEditor', state.data.REVIEWS, [{key:'name',label:'Name'},{key:'from',label:'From'},{key:'trip',label:'Trip ID'},{key:'rating',label:'Rating (1-5)'},{key:'date',label:'Date'},{key:'text',label:'Text',type:'textarea'}]);
-}
+function renderStory(){ $('#storyText').value=(state.data.STORY||[]).join('\n\n'); }
+function renderStats(){ $('#statsText').value=(state.data.STATS||[]).map(s=>`${s.n} | ${s.suf||''} | ${s.l||''}`).join('\n'); }
+function renderReviews(){ renderReviewsRef=simpleListEditor('reviewsEditor', state.data.REVIEWS, [{key:'name',label:'Name'},{key:'from',label:'From'},{key:'trip',label:'Trip ID'},{key:'rating',label:'Rating (1-5)'},{key:'date',label:'Date'},{key:'text',label:'Text',type:'textarea'}]); }
+function renderPublished(){ $('#publishedJson').value=JSON.stringify(state.data.PUBLISHED||{trips:[],dates:{},reviews:[]}, null, 2); }
 $('#saveStory').onclick=()=>{
   if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.STORY=$('#storyText').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean); markDirty('Story saved.'); showStatus($('#status'),'Story saved in draft. Publish to commit.','ok'); };
 $('#saveStats').onclick=()=>{
   if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.STATS=linesToArr($('#statsText').value).map(l=>{const [n,suf,lbl]=l.split('|').map(x=>x.trim()); const o={n:Number(n), l:lbl||''}; if(suf) o.suf=suf; return o;}); markDirty('Stats saved.'); showStatus($('#status'),'Stats saved in draft. Publish to commit.','ok'); };
-$('#addReview').onclick=()=>{ state.data.REVIEWS.push({name:'',from:'',trip:'',rating:5,text:'',date:''}); renderMore(); };
+$('#addReview').onclick=()=>{ state.data.REVIEWS.push({name:'',from:'',trip:'',rating:5,text:'',date:''}); renderReviews(); };
 $('#saveReviews').onclick=()=>{
   if(!state.data){ showStatus($('#status'),'Connect and load the main repo first.','err'); return; } state.data.REVIEWS.forEach(r=>{ r.rating=Number(r.rating)||5; }); markDirty('Reviews saved.'); showStatus($('#status'),'Reviews saved in draft. Publish to commit.','ok'); };
 $('#savePublished').onclick=()=>{
